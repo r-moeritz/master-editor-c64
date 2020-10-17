@@ -1,7 +1,7 @@
 # Paths
 SRCDIR := src
 OBJDIR := dist
-SRC := $(SRCDIR)/master-editor.s
+SRC := $(SRCDIR)/master-editor.asm
 BIN := $(OBJDIR)/a.out
 PRG := $(OBJDIR)/master-editor.prg
 D64 := $(OBJDIR)/master-editor.d64

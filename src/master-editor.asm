@@ -2,58 +2,60 @@
 
   .org $8000
 
+fa = $ba
 
-;==========
-; Main menu
-;==========
       lda  #$00                         
       sta  $D020                        ; Border color
       sta  $0286                        ; Current char color code
       lda  #$0F                         
       sta  $D021                        ; Background 0 color
-W800D:
+;==========
+; Main menu
+;==========
+draw_menu:
       lda  #$48                         
       ldx  #$8C                         
-      jsr  W85D9                        ; Clear screen
+      jsr  W85D9                        ; "Menue"
       lda  #$74                         
       ldx  #$8C                         
-      jsr  W85D9                        ; Cursor down
+      jsr  W85D9                        ; "1) character-editor"
       lda  #$94                         
       ldx  #$8C                         
-W801F:
-      jsr  W85D9                        ; Space
+      jsr  W85D9                        ; "2) screen-editor"
       lda  #$B0                         
       ldx  #$8C                         
-      jsr  W85D9                        ; Space
+      jsr  W85D9                        ; "3) sprite-editor"
       lda  #$56                         
       ldx  #$8E                         
-      jsr  W85D9                        ; Space
+      jsr  W85D9                        ; "4) directory"
       lda  #$6E                         
       ldx  #$8E                         
-      jsr  W85D9                        ; Space
-      lda  #$9F                         
-      ldx  #$8E                         
-      jsr  W85D9                        ; Space
+      jsr  W85D9                        ; "5) floppy-commands"
+      jsr draw_drive_menu_entry
+      nop
+      nop
+      nop
+      nop
       lda  #$8C                         
       ldx  #$8E                         
-      jsr  W85D9                        ; Space
+      jsr  W85D9                        ; "7) reset"
 ;---------------------
 ; Main menu input loop
 ;---------------------
-W8045:
+menu_input_loop:
       jsr  $FFE4                        ; Routine: Take the char from keyboard buffer
       cmp  #$00                         
-      beq  W8045                        
+      beq  menu_input_loop                        
       sec                               
       sbc  #$31                         
       cmp  #$07                         
-      bcs  W8045                        
+      bcs  menu_input_loop                        
       asl                               
       tax                               
-      lda  W8065,x                      
+      lda  menu_jmp_tbl,x                      
       sta  W8062+1                      
       inx                               
-      lda  W8065,x                      
+      lda  menu_jmp_tbl,x                      
       sta  W8062+2                      
 W8062:
       jmp  WC168                        
@@ -61,12 +63,18 @@ W8062:
 ;----------------------
 ; Menu entry jump table
 ;----------------------
-W8065:
-  .byte $73, $80, $F4, $8E, $68, $C1, $82, $C0
-  .byte $00, $C0, $0D, $80, $E2, $FC
+menu_jmp_tbl:
+  .word #chredit
+  .byte $F4, $8E
+  .byte $68, $C1
+  .byte $82, $C0
+  .byte $00, $C0
+  .word #toggle_device
+  .byte $E2, $FC
 ;===============
 ; Charset editor
 ;===============
+chredit:
       jsr  W8652+2                      
       lda  #$CC                         
       ldx  #$8C                         
@@ -316,14 +324,14 @@ W8224:
       jmp  W8119                        
 
 W822F:
-      brk                               
+      .byte $00
 W8230:
-      brk                               
+      .byte $00
 W8231:
       jsr  W8BF2                        
       lda  #$00                         
       sta  $028A                        ; Flag: repeat pressed key, case 0x80=all keys
-      jmp  W800D                        
+      jmp  draw_menu                        
 
 W823C:
       ldx  W864E                        
@@ -1439,7 +1447,7 @@ W8A49:
       lda  #$00                         
       sta  $9D                          ; Flag: 80=direct mode 00=program mode
       lda  #$01                         
-      ldx  #$08                         
+      ldx  fa
       ldy  #$01                         
       jsr  $FFBA                        ; Routine: Set primary, secondary and logical addresses
       ldx  #$E4                         
@@ -1453,7 +1461,7 @@ W8A49:
       pla                               
       sta  $9D                          ; Flag: 80=direct mode 00=program mode
       lda  #$0F                         
-      ldx  #$08                         
+      ldx  fa                         
       ldy  #$0F                         
       jsr  $FFBA                        ; Routine: Set primary, secondary and logical addresses
       lda  #$00                         
@@ -1559,7 +1567,7 @@ W8B2B:
 
 W8B45:
       lda  #$0F                         
-      ldx  #$08                         
+      ldx  fa                         
       ldy  #$0F                         
       jsr  $FFBA                        ; Routine: Set primary, secondary and logical addresses
       lda  #$00                         
@@ -1604,7 +1612,7 @@ W8B97:
       lda  #$00                         
       sta  $9D                          ; Flag: 80=direct mode 00=program mode
       lda  #$01                         
-      ldx  #$08                         
+      ldx  fa                         
       ldy  #$00                         
       jsr  $FFBA                        ; Routine: Set primary, secondary and logical addresses
       ldx  #$E4                         
@@ -1620,7 +1628,7 @@ W8B97:
       pla                               
       sta  $9D                          ; Flag: 80=direct mode 00=program mode
       lda  #$0F                         
-      ldx  #$08                         
+      ldx  fa                         
       ldy  #$0F                         
       jsr  $FFBA                        ; Routine: Set primary, secondary and logical addresses
       lda  #$00                         
@@ -1772,7 +1780,7 @@ W8E8C:
   .byte "7) RESET" 
   .byte $00, $20, $20, $20, $20, $20
   .byte $20, $20, $20, $20, $20
-  .byte "6) SPECIAL" 
+  .byte "6) DRIVE 8"
   .byte $0D, $00
 W8EB5:
   .byte $FF, $C0, $00, $80, $40, $00, $80, $40
@@ -1941,7 +1949,7 @@ W900C:
       jsr  W8BF2                        
       lda  #$00                         
       sta  $028A                        ; Flag: repeat pressed key, case 0x80=all keys
-      jmp  W800D                        
+      jmp  draw_menu                        
 
 W9017:
       inc  W9066                        
@@ -3857,13 +3865,31 @@ W9EFD:
   .byte $00, $00, $00, $00, $00, $00, $00, $00
   .byte $00, $00, $00, $00, $00, $00, $00, $00
   .byte $00, $00, $00, $00, $00, $00, $00, $00
-  .byte $00, $00, $00, $00, $00, $00, $00, $00
-  .byte $00, $00, $00, $00, $00, $00, $00, $00
-  .byte $00, $00, $00, $00, $00, $00, $00, $00
-  .byte $00, $00, $00, $00, $00
-W9FAA:
-  .byte $00, $00, $00, $00, $00, $00, $00, $00
   .byte $00, $00, $00, $00, $00, $00
+
+draw_drive_menu_entry:
+      lda  fa
+      adc  #$30
+      sta  $8eb2                        ; set displayed dev. #
+      lda  #$9F                         
+      ldx  #$8E                         
+      jsr  W85D9                        ; "6) drive 8"
+      rts
+
+toggle_device:
+      ldx  #$09
+      cpx  fa
+      beq  dev8
+      jmp  setdev
+dev8:
+      ldx  #$08
+setdev:
+      stx  fa
+      txa
+      adc  #$30
+      sta  $8eb2                        ; set displayed dev. #
+      jmp  draw_menu
+
 W9FB8:
       jsr  W9FD6                        
       jmp  $a093                        ; BASIC ROM
@@ -3922,7 +3948,7 @@ WC000:
       ldx  #$CC                         
       jsr  W85D9                        
       lda  #$01                         
-      ldx  #$08                         
+      ldx  fa
       ldy  #$0F                         
       jsr  $FFBA                        ; Routine: Set primary, secondary and logical addresses
       lda  #$00                         
@@ -3957,7 +3983,7 @@ WC02F:
       jsr  W873A                        
       bcs  WC07F                        
       lda  #$01                         
-      ldx  #$08                         
+      ldx  fa
       ldy  #$0F                         
       jsr  $FFBA                        ; Routine: Set primary, secondary and logical addresses
       lda  #$00                         
@@ -3980,12 +4006,12 @@ WC074:
 
       jsr  $FFC3                        ; Routine: Close a specified logical file
 WC07F:
-      jmp  W800D                        
+      jmp  draw_menu                        
 
       lda  #$93                         
-      jsr  $aB47                        ; Routine: Introduces a char in canal+ errors and char
+      jsr  $AB47                        ; Routine: Introduces a char in canal+ errors and char
       lda  #$01                         
-      ldx  #$08                         
+      ldx  fa
       ldy  #$00                         
       jsr  $FFBA                        ; Routine: Set primary, secondary and logical addresses
       ldx  #$32                         
@@ -4085,7 +4111,7 @@ WC150:
 WC15F:
       jsr  $FFE4                        ; Routine: Take the char from keyboard buffer
       beq  WC15F                        
-      jmp  W800D                        
+      jmp  draw_menu                        
 
 WC167:
       brk                               
@@ -4356,7 +4382,7 @@ WC324:
       sta  $D017                        ; (2X) vertical expansion (Y) sprite 0..7
       sta  $D01D                        ; (2X) horizontal expansion (X) sprite 0..7
       sta  $D01C                        ; Set multicolor mode for sprite 0..7
-      jmp  W800D                        
+      jmp  draw_menu                        
 
 WC338:
       lda  #$03                         
@@ -4811,7 +4837,7 @@ WC646:
       sta  $FB                          ; Free 0 page for user program
       stx  $FC                          
       jsr  WC943                        
-      ldx  #$08                         
+      ldx  fa
       jsr  $FFBA                        ; Routine: Set primary, secondary and logical addresses
       lda  W880B+2                      
       ldx  #$E4                         
@@ -4890,7 +4916,7 @@ WC74E:
       jsr  W873A                        
       bcs  WC78B                        
       lda  #$02                         
-      ldx  #$08                         
+      ldx  fa
       ldy  #$00                         
       jsr  $FFBA                        ; Routine: Set primary, secondary and logical addresses
       lda  W880B+2                      
