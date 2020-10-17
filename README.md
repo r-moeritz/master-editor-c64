@@ -6,6 +6,10 @@ This is the re-assembled source code for *Master Editor*, a combination of three
 - a screen editor
 - a sprite editor
 
+## Modifications
+
+I have made some modifications to the orginal program, see the [ChangeLog](./ChangeLog.md) for details.
+
 # Build instructions
 
 ## Prerequisites
